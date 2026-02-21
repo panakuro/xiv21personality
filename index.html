@@ -843,7 +843,7 @@ img[src=""], img:not([src]) { background: rgba(255,255,255,0.03); }
 <div class="container">
   <div class="header">
     <div class="header-badge">Eorzea Job Divination</div>
-    <h1>FF14 ジョブ性格診断</h1>
+    <h1 onclick="goHome()" style="cursor:pointer;" title="ホームに戻る">FF14 ジョブ性格診断</h1>
     <p class="subtitle">あなたの魂が呼ぶジョブを、星が告げる</p>
     <div class="divider"><div class="divider-gem"></div></div>
   </div>
@@ -1403,6 +1403,15 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 
+function goHome() {
+  // スコアをリセットしてイントロ画面に戻る
+  currentQ = 0;
+  axisScores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+  selectedVal = null;
+  answerHistory = [];
+  showScreen('screen-intro');
+}
+
 function startQuiz() {
   currentQ = 0;
   axisScores = { EI: 0, SN: 0, TF: 0, JP: 0 };
@@ -1580,7 +1589,7 @@ function showResult() {
       `${siteUrl}
 
 ` +
-      `#FF14 #ジョブ診断 #あーとの暇つぶし制作`
+      `#FF14 #ジョブ診断 #あーと制作`
     );
     document.getElementById('share-btn').href = `https://twitter.com/intent/tweet?text=${shareText}`;
 
@@ -1945,5 +1954,18 @@ createStars();
 })();
 </script>
 
+<footer style="
+  text-align:center;
+  padding:32px 20px 40px;
+  font-size:11px;
+  color:rgba(232,223,200,0.35);
+  line-height:1.8;
+  letter-spacing:0.05em;
+">
+  本サイトはファンが制作した非公式コンテンツです。<br>
+  FINAL FANTASY XIV &copy; SQUARE ENIX CO., LTD. All Rights Reserved.<br>
+  「FINAL FANTASY」はスクウェア・エニックス株式会社の登録商標です。<br>
+  <span style="margin-top:6px;display:inline-block;">制作：あーと &nbsp;|&nbsp; <a href="https://twitter.com/Art_Xivss" target="_blank" style="color:rgba(232,223,200,0.5);text-decoration:none;">@Art_Xivss</a></span>
+</footer>
 </body>
 </html>
