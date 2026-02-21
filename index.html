@@ -1621,10 +1621,11 @@ function drawRoleChart(role, axisScores) {
   const minVal = Math.min(...Object.values(raw));
   const shifted = {};
   roleNames.forEach(rn => { shifted[rn] = raw[rn] - minVal + 0.1; });
+  // 出たジョブのロールを必ずMAXにする
+  shifted[role] = Math.max(...Object.values(shifted)) * 1.01;
   const maxVal = Math.max(...Object.values(shifted));
   const normalized = {};
   roleNames.forEach(rn => { normalized[rn] = shifted[rn] / maxVal; });
-  normalized[role] = Math.max(normalized[role], 0.75);
 
   // SVG五角形レーダーチャート
   const cx = 130, cy = 135, r = 85;
