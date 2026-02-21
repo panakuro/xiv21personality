@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FF14 ジョブ性格診断</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Serif+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --deep: #0a0812;
+    --dark: #100e1a;
+    --panel: #16122a;
+    --panel2: #1e1838;
+    --accent: #6a4fcf;
+    --accent2: #9b6bff;
+    --text: #e8dfc8;
+    --text-dim: #8a7f6a;
+    --glow: rgba(201,168,76,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Serif JP', serif;
+    background: var(--deep);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background stars */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(106,79,207,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(201,168,76,0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .stars {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--dur, 3s) infinite;
+    opacity: var(--op, 0.5);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: var(--op, 0.5); }
+    50% { opacity: 0.1; }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 60px;
+    animation: fadeDown 1s ease;
+  }
+
+  .header-badge {
+    display: inline-block;
+    border: 1px solid var(--gold);
+    padding: 4px 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), #a07030);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+  }
+  .divider-gem {
+    width: 8px;
+    height: 8px;
+    background: var(--gold);
+    transform: rotate(45deg);
+  }
+
+  /* Screen transitions */
+  .screen {
+    display: none;
+    animation: fadeIn 0.6s ease;
+  }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Intro card */
+  .intro-card {
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 4px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .intro-hero-img {
+    display: block;
+    width: 100%;
+    max-height: 560px;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .intro-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,8,18,0.55);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+  }
+
+  .intro-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    z-index: 2;
+  }
+
+  .intro-icon {
+    margin-bottom: 28px;
+    display: block;
+  }
+
+  .intro-card p {
+    color: var(--text);
+    line-height: 1.8;
+    font-size: 14px;
+    margin-bottom: 32px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    text-shadow: 0 1px 10px rgba(0,0,0,1), 0 0 30px rgba(0,0,0,1);
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-block;
+    padding: 14px 40px;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold), #a07030);
+    color: var(--deep);
+    font-weight: 700;
+    box-shadow: 0 0 30px var(--glow);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 50px rgba(201,168,76,0.5);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    margin-top: 12px;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(201,168,76,0.1);
+  }
+
+  /* Progress */
+  .progress-bar {
+    background: var(--panel);
+    border: 1px solid rgba(201,168,76,0.2);
+    height: 4px;
+    border-radius: 2px;
+    margin-bottom: 40px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    transition: width 0.5s ease;
+    box-shadow: 0 0 10px var(--gold);
+  }
+
+  .progress-text {
+    text-align: right;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'Cinzel', serif;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  /* Question card */
+  .question-card {
+    background: var(--panel);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 4px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .question-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .question-number {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  .question-text {
+    font-size: clamp(16px, 3vw, 22px);
+    font-weight: 700;
+    line-height: 1.6;
+    margin-bottom: 36px;
+    color: var(--text);
+  }
+
+  /* Quiz instruction banner */
+  .quiz-instruction {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.25);
+    padding: 10px 20px;
+    margin-bottom: 28px;
+    background: rgba(201,168,76,0.05);
+  }
+
+  /* Scale UI */
+  .question-text {
+    font-size: clamp(15px, 2.8vw, 20px);
+    font-weight: 700;
+    line-height: 1.7;
+    margin-bottom: 32px;
+    color: var(--text);
+  }
+
+  .scale-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .scale-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(201,168,76,0.07);
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 3px;
+  }
+
+  .scale-row:last-child { border-bottom: none; }
+
+  .scale-row:hover { background: rgba(201,168,76,0.05); }
+
+  .scale-row.selected {
+    background: rgba(201,168,76,0.08);
+  }
+
+  .scale-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(201,168,76,0.3);
+    flex-shrink: 0;
+    transition: all 0.2s;
+    position: relative;
+    margin-left: 8px;
+  }
+
+  .scale-row.selected .scale-radio {
+    border-color: var(--gold);
+    background: var(--gold);
+    box-shadow: 0 0 10px var(--glow);
+  }
+
+  .scale-row.selected .scale-radio::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    background: var(--deep);
+    border-radius: 50%;
+  }
+
+  .scale-label {
+    font-size: 13px;
+    color: var(--text-dim);
+    transition: color 0.2s;
+    line-height: 1.5;
+  }
+
+  .scale-row.selected .scale-label {
+    color: var(--gold-light);
+  }
+
+  .scale-row:hover .scale-label {
+    color: var(--text);
+  }
+
+  .scale-tag {
+    margin-left: auto;
+    margin-right: 8px;
+    font-size: 10px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 1px;
+    color: rgba(201,168,76,0.35);
+    white-space: nowrap;
+  }
+
+  .scale-row.selected .scale-tag {
+    color: var(--gold);
+  }
+
+  .next-btn {
+    display: block;
+    margin: 28px auto 0;
+    padding: 12px 40px;
+    background: linear-gradient(135deg, var(--gold), #a07030);
+    color: var(--deep);
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .next-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .next-btn:hover {
+    box-shadow: 0 0 30px var(--glow);
+    transform: translateY(-2px);
+  }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .crystal {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 32px;
+    position: relative;
+  }
+
+  .crystal-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--gold));
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+  }
+
+  .loading-text {
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    letter-spacing: 4px;
+    font-size: 13px;
+  }
+
+  /* Result card */
+  .result-card {
+    text-align: center;
+  }
+
+  /* ジョブアート：全幅ヒーロー表示 */
+  .result-hero {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto 32px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .result-job-art {
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    filter: drop-shadow(0 0 40px rgba(201,168,76,0.3));
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @media (max-width: 500px) {
+    .result-job-art { max-height: 340px; }
+  }
+
+  /* 画像上のオーバーレイグラデーション */
+  .result-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, rgba(10,8,18,0.95) 0%, rgba(10,8,18,0.4) 40%, transparent 70%),
+      linear-gradient(to bottom, rgba(10,8,18,0.5) 0%, transparent 30%);
+    pointer-events: none;
+  }
+
+  /* オーバーレイテキスト（画像の上） */
+  .result-overlay-top {
+    position: absolute;
+    top: 20px;
+    left: 0; right: 0;
+    z-index: 2;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .result-overlay-bottom {
+    position: absolute;
+    bottom: 24px;
+    left: 0; right: 0;
+    z-index: 2;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .result-mbti {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: var(--accent2);
+    text-shadow: 0 0 20px rgba(155,107,255,0.8);
+    margin-bottom: 6px;
+  }
+
+  .result-job-name {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(36px, 9vw, 72px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff 0%, var(--gold-light) 40%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 6px;
+    text-shadow: none;
+    filter: drop-shadow(0 2px 20px rgba(201,168,76,0.6));
+  }
+
+  .result-job-name-jp {
+    font-size: 15px;
+    color: rgba(232,223,200,0.8);
+    letter-spacing: 2px;
+  }
+
+  .result-panel {
+    background: var(--panel);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 4px;
+    padding: 32px;
+    margin: 24px 0;
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+  }
+
+  .result-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .result-desc {
+    font-size: 15px;
+    line-height: 2;
+    color: var(--text);
+    margin-bottom: 24px;
+  }
+
+  .traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .trait {
+    padding: 4px 14px;
+    border: 1px solid rgba(201,168,76,0.3);
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    font-family: 'Cinzel', serif;
+  }
+
+  .score-bars {
+    margin-top: 24px;
+  }
+
+  .score-bar {
+    margin-bottom: 12px;
+  }
+
+  .score-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .score-track {
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease 0.5s;
+  }
+
+
+
+
+  /* Role triangle chart */
+  .role-chart {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .role-chart-title {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  .role-pentagon {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Share */
+  .share-area {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-x {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 32px;
+    background: #000;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 3px;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn-x:hover {
+    background: #1a1a1a;
+    border-color: rgba(255,255,255,0.4);
+    transform: translateY(-2px);
+  }
+
+  .btn-x svg {
+    width: 18px;
+    height: 18px;
+    fill: white;
+  }
+
+  .btn-retry {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid rgba(201,168,76,0.2);
+    padding: 10px 24px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-retry:hover {
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  /* Axes labels */
+  .axes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .axis-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* 相性ジョブセクション */
+  .compat-section {
+    margin-bottom: 24px;
+  }
+  .compat-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  .compat-title-deco { opacity: 0.5; }
+  .compat-subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+  .compat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .compat-card {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    background: var(--panel2);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 4px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .compat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
+  }
+  .compat-card:hover { border-color: rgba(201,168,76,0.35); }
+  .compat-img-wrap {
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: transparent;
+  }
+  .compat-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+  }
+  .compat-icon-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+  .compat-info { flex: 1; min-width: 0; }
+  .compat-mbti {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent2);
+    margin-bottom: 3px;
+  }
+  .compat-name {
+    font-family: 'Cinzel', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+  .compat-name-jp {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .compat-comment {
+    font-size: 12px;
+    color: rgba(232,223,200,0.75);
+    line-height: 1.7;
+  }
+  .compat-badge {
+    position: absolute;
+    top: 10px; right: 12px;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+
+/* === Image placeholders (Base64 removed) ===
+   This file intentionally removes heavy base64 images for editing with Claude.
+   Replace placeholder src with your own images later if needed.
+*/
+img[src=""], img:not([src]) { background: rgba(255,255,255,0.03); }
+
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-badge">Eorzea Job Divination</div>
+    <h1>FF14 ジョブ性格診断</h1>
+    <p class="subtitle">あなたの魂が呼ぶジョブを、星が告げる</p>
+    <div class="divider"><div class="divider-gem"></div></div>
+  </div>
+
+  <!-- Intro Screen -->
+  <div class="screen active" id="screen-intro">
+    <div class="intro-card">
+      <img class="intro-hero-img" src="image/Crystal.png" alt="">
+      <div class="intro-overlay">
+        <p>
+          24の問いに答えることで、<br>あなたの内なる性格からエオルゼアに相応しいジョブを導き出します。<br>
+          MBTI的な4軸（E/I・S/N・T/F・J/P）をもとに<br>21のジョブタイプへマッピング。<br>
+          診断結果はXでシェアできます。
+        </p>
+        <button class="btn btn-primary" onclick="startQuiz()">診断を始める</button>
+        <button class="btn btn-secondary" id="debug-btn" style="display:none" onclick="runDebugSimulation()">デバッグ：ランダム10,000回</button>
+        <div id="debug-status" style="display:none;margin-top:10px;font-size:12px;color:rgba(232,223,200,0.7);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Screen -->
+  <div class="screen" id="screen-quiz">
+    <div class="quiz-instruction">自分に近いものを選択してください</div>
+    <div class="progress-text" id="progress-text">Question 1 / 20</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:5%"></div>
+    </div>
+    <div class="question-card" id="question-card">
+      <div class="question-number" id="question-number">第 1 問</div>
+      <div class="question-text" id="question-text"></div>
+      <div id="scale-area"></div>
+    </div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div class="screen" id="screen-loading">
+    <div class="loading">
+      <div class="crystal"><div class="crystal-inner"></div></div>
+      <div class="loading-text">占星盤が廻る...</div>
+    </div>
+  </div>
+
+  <!-- Result Screen -->
+  <div class="screen" id="screen-result">
+    <div class="result-card">
+
+      <!-- ヒーロー画像 + テキストオーバーレイ -->
+      <div class="result-hero">
+        <span id="result-icon"></span>
+        <div class="result-overlay-top">
+          <div class="result-mbti" id="result-mbti"></div>
+        </div>
+        <div class="result-overlay-bottom">
+          <div class="result-job-name" id="result-job-name"></div>
+          <div class="result-job-name-jp" id="result-job-name-jp"></div>
+        </div>
+      </div>
+
+      <div class="result-panel">
+        <div class="result-desc" id="result-desc"></div>
+        <div class="traits" id="result-traits"></div>
+        <div class="score-bars" id="score-bars"></div>
+      </div>
+
+      <!-- 相性ジョブ -->
+      <div class="compat-section">
+        <div class="compat-title">
+          <span class="compat-title-deco">✦</span>
+          COMPATIBLE JOBS
+          <span class="compat-title-deco">✦</span>
+        </div>
+        <div class="compat-subtitle">相性のいいジョブ</div>
+        <div class="compat-list" id="compat-list"></div>
+      </div>
+
+      <div class="share-area">
+        <a class="btn-x" id="share-btn" href="#" target="_blank">
+          <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.741l7.73-8.835L1.254 2.25H8.08l4.259 5.622L18.243 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Xでシェアする
+        </a>
+        <button class="btn-retry" onclick="restartQuiz()">もう一度診断する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const JOB_IMAGES = {
+  Paladin: "image/jobart/Paladin.png",
+  Warrior: "image/jobart/Warrior.png",
+  DarkKnight: "image/jobart/Dark_Knight.png",
+  Gunbreaker: "image/jobart/Gunbreaker.png",
+  WhiteMage: "image/jobart/White_Mage.png",
+  Scholar: "image/jobart/Scholar.png",
+  Astrologian: "image/jobart/Astrologian.png",
+  Sage: "image/jobart/Sage.png",
+  Monk: "image/jobart/Monk.png",
+  Ninja: "image/jobart/Ninja.png",
+  Reaper: "image/jobart/Reaper.png",
+  Samurai: "image/jobart/Samurai.png",
+  Viper: "image/jobart/Viper.png",
+  Dragoon: "image/jobart/Dragoon.png",
+  Bard: "image/jobart/Bard.png",
+  Dancer: "image/jobart/Dancer.png",
+  Machinist: "image/jobart/Machinist.png",
+  Summoner: "image/jobart/Summoner.png",
+  BlackMage: "image/jobart/Black_Mage.png",
+  RedMage: "image/jobart/Red_Mage.png",
+  Pictomancer: "image/jobart/Pictomancer.png",
+  BlueMage: "image/jobart/Blue_Mage.png",
+};
+
+// ===== 7段階ラベル =====
+const SCALE = [
+  { val: +3, label: "強くそう思う" },
+  { val: +2, label: "そう思う" },
+  { val: +1, label: "どちらかといえばそう思う" },
+  { val:  0, label: "どちらともいえない" },
+  { val: -1, label: "どちらかといえばそう思わない" },
+  { val: -2, label: "そう思わない" },
+  { val: -3, label: "全くそう思わない" },
+];
+
+// ===== 質問データ（24問・1問1軸・正転3＋逆転3の対称設計）=====
+// axis の正方向 = E / S / T / J
+// reversed:true の問は回答値を反転して加算
+const questions = [
+  // ── E / I（正転3・逆転3）──
+  { axis:"EI", reversed:false, text:"初対面の人とでも、話しているうちに自然と打ち解けられる方だ。" },
+  { axis:"EI", reversed:false, text:"グループで何かをするとき、自分から意見を出してまとめ役になることが多い。" },
+  { axis:"EI", reversed:false, text:"週末は誰かと過ごす予定を入れた方が、充実感を感じやすい。" },
+  { axis:"EI", reversed:true,  text:"長い時間人と一緒にいると、ひとりになって回復したくなる。" },
+  { axis:"EI", reversed:true,  text:"自分の考えを口に出すより、頭の中で整理してから話す方が好きだ。" },
+  { axis:"EI", reversed:true,  text:"賑やかな場にいるより、静かな環境でひとりに集中している方が落ち着く。" },
+
+  // ── S / N（正転3・逆転3）──
+  { axis:"SN", reversed:false, text:"アイデアを考えるより、具体的な作業をこなしている方が充実感がある。" },
+  { axis:"SN", reversed:false, text:"物事を判断するとき、勘や直感より実績や経験をもとにする方が信頼できる。" },
+  { axis:"SN", reversed:false, text:"新しいことを覚えるとき、手順を一つずつ確実に身につけていく方が好きだ。" },
+  { axis:"SN", reversed:true,  text:"目の前のことより、その先に何があるかを考えている方が楽しい。" },
+  { axis:"SN", reversed:true,  text:"既存のやり方より、もっと良い方法があるはずだと考えることが多い。" },
+  { axis:"SN", reversed:true,  text:"細かい事実を積み上げるより、全体の意味やパターンを掴む方が得意だ。" },
+
+  // ── T / F（正転3・逆転3）──
+  { axis:"TF", reversed:false, text:"感情的な場面でも、まず状況を整理して論理的に対応しようとする方だ。" },
+  { axis:"TF", reversed:false, text:"誰かのやり方に問題があると思ったとき、相手の気持ちより正しさを優先する。" },
+  { axis:"TF", reversed:false, text:"意見が対立したとき、相手との関係より話の筋が通っているかを先に考える。" },
+  { axis:"TF", reversed:true,  text:"正しいことより、相手がどう感じるかを先に考えてしまう。" },
+  { axis:"TF", reversed:true,  text:"決断するとき、理屈よりも自分や周囲の気持ちが決め手になることが多い。" },
+  { axis:"TF", reversed:true,  text:"誰かが落ち込んでいるとき、原因の分析より先に気持ちに寄り添いたくなる。" },
+
+  // ── J / P（正転3・逆転3）──
+  { axis:"JP", reversed:false, text:"何かを始める前に、ゴールと段取りを決めておかないと落ち着かない。" },
+  { axis:"JP", reversed:false, text:"締め切りや約束は、前倒しで片付けておく方が気持ちよく過ごせる。" },
+  { axis:"JP", reversed:false, text:"決めたことを最後まで一貫してやり遂げることに、こだわりがある方だ。" },
+  { axis:"JP", reversed:true,  text:"計画より、そのときの流れや気分に合わせて動く方が自分らしい。" },
+  { axis:"JP", reversed:true,  text:"選択肢をなるべく開いたままにしておきたい、早く決めるのが苦手だ。" },
+  { axis:"JP", reversed:true,  text:"やることを決めずに動き始めて、後から形を整えていく方が性に合っている。" },
+];
+  // Expose for debug tools
+  window.questions = questions;
+
+// ===== ロール判定（MBTIスコアのみから導出）=====
+//
+// 各軸の意味：
+//   EI: E(+)=集団・外向き → TANK/HEALER向き  I(-)=単独・内向き → CDPS/RDPS向き
+//   TF: T(+)=論理・冷静   → TANK/MDPS向き    F(-)=共感・感情   → HEALER/RDPS向き
+//   SN: S(+)=実践・身体   → MDPS/RDPS向き    N(-)=直感・理論   → CDPS向き
+//   JP: J(+)=責任・計画   → TANK/HEALER向き  P(-)=自由・即興   → DPS全般向き
+//
+// 各軸スコアを -15〜+15 の範囲で受け取り、各ロールへの重み付きスコアを算出して最大を返す
+
+function determineRoleScores(axisScores) {
+  // FF14プレイヤーはI・N寄りの母集団バイアスがあるため補正
+  const norm = (x, offset = 0) => {
+    const v = (Number(x) || 0) - offset;
+    return Math.max(-1, Math.min(1, v / 12));
+  };
+
+  const ei = norm(axisScores.EI, 0);
+  const sn = norm(axisScores.SN, 0);
+  const tf = norm(axisScores.TF, 0);
+  const jp = norm(axisScores.JP, 0);
+
+  const s = { TANK: 0, HEALER: 0, MDPS: 0, RDPS: 0, CDPS: 0 };
+
+  // EI
+  s.TANK   += ei * 0.15;
+  s.HEALER += ei * 0.18;
+  s.RDPS   += ei * 0.18;
+  s.CDPS   -= ei * 0.18;
+  s.MDPS   -= ei * 0.08;
+
+  // TF: T→TANK/MDPS/CDPS, F→HEALER/RDPS
+  s.MDPS   += tf * 0.25;
+  s.TANK   += tf * 0.25;
+  s.CDPS   += tf * 0.20;
+  s.HEALER -= tf * 0.28;
+  s.RDPS   -= tf * 0.15;
+
+  // SN: S→MDPS/RDPS/TANK, N→CDPS
+  s.MDPS   += sn * 0.20;
+  s.RDPS   += sn * 0.18;
+  s.TANK   += sn * 0.20;
+  s.CDPS   -= sn * 0.22;
+  s.HEALER -= sn * 0.08;
+
+  // JP: J→HEALER/TANK, P→DPS/CDPS
+  s.TANK   += jp * 0.10;
+  s.HEALER += jp * 0.18;
+  s.MDPS   -= jp * 0.12;
+  s.RDPS   -= jp * 0.12;
+  s.CDPS   += jp * 0.05;
+
+  return s;
+}
+
+function determineRole(axisScores) {
+  const s = determineRoleScores(axisScores);
+  let bestRole = 'MDPS';
+  let bestScore = -Infinity;
+  for (const [role, score] of Object.entries(s)) {
+    if (score > bestScore) { bestScore = score; bestRole = role; }
+  }
+  return bestRole;
+}
+
+function determineRole(axisScores) {
+  const s = determineRoleScores(axisScores);
+
+  // 最高スコアのロールを確定的に返す
+  // （softmaxサンプリングは傾向と違う結果を返すことがあるため廃止）
+  let bestRole = 'MDPS';
+  let bestScore = -Infinity;
+  for (const [role, score] of Object.entries(s)) {
+    if (score > bestScore) {
+      bestScore = score;
+      bestRole = role;
+    }
+  }
+  return bestRole;
+}
+
+// ===== ジョブマスタ =====
+// key: MBTI_ROLE
+const jobMap = {
+  // ─── TANK ───
+  ENTJ_TANK: { name:"Paladin",    nameJp:"ナイト",       icon:"🛡️", color:"#5b8dd9", role:"タンク",
+    desc:"強靭な意志と冷静な指揮力で前線を率いるリーダー。仲間を守りながら戦場を支配するナイトは、あなたの「正義を体現する者」としての本質そのもの。",
+    traits:["リーダーシップ","決断力","戦略思考","使命感"], imgKey:"Paladin" },
+  ESTJ_TANK: { name:"Warrior",    nameJp:"戦士",         icon:"🪓", color:"#c04b1a", role:"タンク",
+    desc:"力と規律で戦場を制する不動の盾。戦士の圧倒的な自己回復と安定した存在感は、あなたの「実直・信頼・行動力」の三拍子を象徴します。逃げず、退かず、ただ前へ。",
+    traits:["実直","忍耐力","安定感","行動力"], imgKey:"Warrior" },
+  ISTJ_TANK: { name:"Dark Knight", nameJp:"暗黒騎士",    icon:"🌑", color:"#4040a0", role:"タンク",
+    desc:"内なる暗闇と向き合いながら仲間を守る誠実な孤独者。誰より静かに、誰より深く燃える。その責任感と葛藤の深さが、暗黒騎士の物語と重なります。",
+    traits:["誠実さ","責任感","内省的","不屈"], imgKey:"DarkKnight" },
+  ESTP_TANK: { name:"Gunbreaker", nameJp:"ガンブレイカー",icon:"🔫", color:"#c49a1a", role:"タンク",
+    desc:"爆発的な反応速度と鋭い判断力を持つ孤高の実践者。複雑なコンボを無言でこなすガンブレイカーは、あなたのクールな独立心と即興力を体現します。",
+    traits:["瞬発力","独立心","現実思考","スタイリッシュ"], imgKey:"Gunbreaker" },
+  // ─── HEALER ───
+  ENFJ_HEALER: { name:"Astrologian", nameJp:"占星術師",  icon:"⭐", color:"#d4af37", role:"ヒーラー",
+    desc:"星の導きとともに仲間を照らすカリスマ的サポーター。最高のタイミングでバフを届ける天性の支援者。あなたの直感と共感力が、星の力に宿ります。",
+    traits:["共感力","先見性","カリスマ","献身"], imgKey:"Astrologian" },
+  ESFJ_HEALER: { name:"White Mage", nameJp:"白魔道士",   icon:"✨", color:"#b8e0e0", role:"ヒーラー",
+    desc:"仲間を生かし続けることに全力を注ぐ純粋な守護者。チームが生きている限り戦いは続く。あなたの利他の心の純粋な発露が、白の魔法に宿ります。",
+    traits:["利他主義","責任感","温かさ","実行力"], imgKey:"WhiteMage" },
+  INFJ_HEALER: { name:"Scholar",    nameJp:"学者",       icon:"📚", color:"#4a8fb5", role:"ヒーラー",
+    desc:"フェアリーを従え、先読みと事前配置で味方を守る洞察者。誰も気づいていない未来への備えという深い先見性と使命感が、学者の静かな戦略に宿ります。",
+    traits:["先見性","思いやり","緻密さ","使命感"], imgKey:"Scholar" },
+  ISFJ_HEALER: { name:"Sage",       nameJp:"賢者",       icon:"💎", color:"#2a9a9a", role:"ヒーラー",
+    desc:"攻撃することで仲間を癒す、静かな守護の哲学者。縁の下で支え続けるあなたの奉仕の精神と慎重な思いやりが、賢者の静かな力となります。",
+    traits:["奉仕精神","慎重さ","温かさ","静かな強さ"], imgKey:"Sage" },
+  // ─── MDPS（近接物理）───
+  ESTP_MDPS: { name:"Monk",        nameJp:"モンク",      icon:"👊", color:"#d4821a", role:"近接DPS",
+    desc:"圧倒的な連撃速度と身体の動きで敵を制する格闘家。刹那の判断と体の反応で生きるモンクは、あなたの爆発的な行動力と現実への直感を体現します。",
+    traits:["行動力","瞬発力","現実思考","肉体派"], imgKey:"Monk" },
+  ISTP_MDPS: { name:"Ninja",       nameJp:"忍者",        icon:"🎌", color:"#3a9a6a", role:"近接DPS",
+    desc:"冷静な分析眼と瞬時の状況判断で華麗に立ち回る実践家。試行錯誤から本質を掴むクールな観察眼と独立した実行力が、忍者の印術に宿ります。",
+    traits:["実践力","冷静さ","器用さ","独立心"], imgKey:"Ninja" },
+  ENTP_MDPS: { name:"Reaper",      nameJp:"リーパー",    icon:"⚔️", color:"#8b4db5", role:"近接DPS",
+    desc:"死霊との契約という異端の哲学で戦場をかき乱す者。既存の枠を壊すことを恐れないあなたの革新性と知的探求が、リーパーの禍々しい力と共鳴します。",
+    traits:["革新性","型破り","頭脳戦","弁論家"], imgKey:"Reaper" },
+  ESTJ_MDPS: { name:"Samurai",     nameJp:"侍",          icon:"⛩️", color:"#c8602a", role:"近接DPS",
+    desc:"圧倒的な剣技と揺るぎない信念で頂点を目指す求道者。侍の研ぎ澄まされた一刀は、あなたの「極めることへの執着」と指揮者的な自己完結性を映します。",
+    traits:["求道精神","集中力","決断力","孤高"], imgKey:"Samurai" },
+  INFP_MDPS: { name:"Viper",       nameJp:"ヴァイパー",  icon:"🐍", color:"#6abf69", role:"近接DPS",
+    desc:"双剣を縦横無尽に操り、独自のリズムで戦場を舞う。既成概念にとらわれないあなたの自由な感性と理想主義が、ヴァイパーのしなやかな戦闘スタイルに宿ります。",
+    traits:["自由奔放","感性","独自スタイル","理想主義"], imgKey:"Viper" },
+  ISFP_MDPS: { name:"Dragoon",     nameJp:"竜騎士",      icon:"🐲", color:"#4169e1", role:"近接DPS",
+    desc:"天高く跳躍し、大地を貫く槍を振るう美学の体現者。その瞬間の美しさへのこだわりと独自の感性が、竜騎士の飛翔と重なります。",
+    traits:["独自性","感性豊か","技巧","美学"], imgKey:"Dragoon" },
+  // ─── RDPS（遠隔物理）───
+  ESFP_RDPS: { name:"Bard",        nameJp:"吟遊詩人",    icon:"🎵", color:"#7cba8a", role:"遠隔DPS",
+    desc:"歌と矢で場を彩るエンターテイナー。あなたは人が喜ぶ瞬間に生きがいを感じ、戦場を劇場に変える天才。吟遊詩人のメロディーはその表現力の結晶です。",
+    traits:["社交性","表現力","適応力","存在感"], imgKey:"Bard" },
+  ENFP_RDPS: { name:"Dancer",      nameJp:"踊り子",      icon:"💃", color:"#e87ca0", role:"遠隔DPS",
+    desc:"場の空気を読み、パートナーとの絆で輝く自由な表現者。予測不能な美しさこそが武器。あなたの豊かな感受性と自発的なエネルギーが踊り子に宿ります。",
+    traits:["創造性","自発性","共感力","華やかさ"], imgKey:"Dancer" },
+  ISTJ_RDPS: { name:"Machinist",   nameJp:"機工士",      icon:"⚙️", color:"#9a7a2a", role:"遠隔DPS",
+    desc:"ガジェットとロボットを自由自在に操る無口なアーティスト。自分だけの道具への愛着はあなたの繊細な感性と独自スタイルへのこだわりを映します。",
+    traits:["独自性","感性豊か","柔軟性","技巧"], imgKey:"Machinist" },
+  // ─── CDPS（魔法・キャスター）───
+  INTJ_CDPS: { name:"Summoner",    nameJp:"召喚士",      icon:"🐉", color:"#7a4fcf", role:"キャスター",
+    desc:"幻獣を戦略的に使い分け、壮大なビジョンのもとに戦う知の支配者。全体を見通す目と長期的計画性が召喚士の力の源。孤高の知略家。",
+    traits:["戦略思考","独立心","洞察力","完璧主義"], imgKey:"Summoner" },
+  INTP_CDPS: { name:"Black Mage",  nameJp:"黒魔道士",    icon:"🔥", color:"#5050c8", role:"キャスター",
+    desc:"定点詠唱という極致へのこだわり。効率より真理を求めるあなたの「ただ純粋に極めたい」という探求心が、黒魔道士の破壊的火力に宿ります。",
+    traits:["探求心","論理性","集中力","独自視点"], imgKey:"BlackMage" },
+  INFP_CDPS: { name:"Red Mage",    nameJp:"赤魔道士",    icon:"⚗️", color:"#c04070", role:"キャスター",
+    desc:"魔法と剣という相反するものを融合させた理想主義者。対立するものの中に美を見つけるあなたの詩的な内面世界が、赤魔道士の白と黒の均衡に宿ります。",
+    traits:["理想主義","均衡感覚","独創性","誠実さ"], imgKey:"RedMage" },
+  ENTP_CDPS: { name:"Pictomancer", nameJp:"ピクトマンサー",icon:"🎨", color:"#e06090", role:"キャスター",
+    desc:"絵画の魔力で戦場を塗り替える創造の異端者。あなたの底知れない発想力と「誰も思いつかないことをやる」という衝動が、ピクトマンサーの魔法筆に宿ります。",
+    traits:["創造性","革新性","表現力","自由"], imgKey:"Pictomancer" },
+};
+
+// MBTIタイプが同じでもロールが違えば別ジョブ
+// フォールバック優先順位マップ（同MBTIで希望ロールがない場合）
+const fallbackOrder = {
+  TANK:   ['TANK','HEALER','MDPS','RDPS','CDPS'],
+  HEALER: ['HEALER','TANK','CDPS','RDPS','MDPS'],
+  MDPS:   ['MDPS','RDPS','CDPS','TANK','HEALER'],
+  RDPS:   ['RDPS','MDPS','CDPS','HEALER','TANK'],
+  CDPS:   ['CDPS','RDPS','MDPS','HEALER','TANK'],
+};
+
+// MBTI相性マップ（相性理論ベース: 補完・双対・同一グループ）
+// 各MBTIに対して相性の良い3つのMBTIキー(jobMapのキー)と一言コメントを定義
+const compatMap = {
+  // TANK
+  ENTJ_TANK: [
+    { key:'INFP_MDPS',  comment:'あなたの指揮力が、ヴァイパーの自由な剣舞を守る盾となる。正反対だからこそ最強のコンビ。' },
+    { key:'INFP_CDPS',  comment:'理想を語る赤魔道士と、それを実現する戦略家。白と黒の均衡をともに守る。' },
+    { key:'ENFJ_HEALER',comment:'リーダー同士の共鳴。占星術師の直感があなたの決断を星で導いてくれる。' },
+  ],
+  ESTJ_TANK: [
+    { key:'INFP_MDPS',  comment:'規律と自由の補完関係。あなたの安定した防御線がヴァイパーの奔放な攻めを活かす。' },
+    { key:'ISFP_MDPS',  comment:'無口な竜騎士の美学を、あなたの力強い盾が静かに支える。言葉は不要。' },
+    { key:'ISFJ_HEALER',comment:'堅実な者同士の最強タッグ。賢者の静かな回復があなたの無敵感をさらに高める。' },
+  ],
+  ISTJ_TANK: [
+    { key:'ENFP_RDPS',  comment:'踊り子の華やかさを影で守る影の守護者。正反対の存在がお互いを完成させる。' },
+    { key:'ESFP_RDPS',  comment:'吟遊詩人のバフがあなたの堅実な守りに彩りを添える。影と光の共演。' },
+    { key:'ESTJ_MDPS',  comment:'同じ剣の道を異なる哲学で歩む者。侍の高みへの執着があなたの責任感を鼓舞する。' },
+  ],
+  ESTP_TANK: [
+    { key:'ENFJ_HEALER',comment:'孤高のガンブレイカーに占星術師の星明かりが降り注ぐ。言葉少なくとも息は合う。' },
+    { key:'ESFJ_HEALER',comment:'白魔道士の温かい回復がクールなあなたの背中を確かに守ってくれる。' },
+    { key:'ESTP_MDPS',  comment:'同じ瞬間を生きる実践者同士。モンクの爆発力とあなたの判断力が場を支配する。' },
+  ],
+  // HEALER
+  ENFJ_HEALER: [
+    { key:'ISTJ_TANK',  comment:'暗黒騎士の孤独な責任感を、あなたの星の光が照らし導く。静かな絆。' },
+    { key:'ESTP_TANK',  comment:'ガンブレイカーの爆発的な盾を支えるカリスマヒーラー。無言のシナジーが生まれる。' },
+    { key:'INTJ_CDPS',  comment:'召喚士の冷徹な知略にあなたの温かい先見性が加わると、パーティが完璧になる。' },
+  ],
+  ESFJ_HEALER: [
+    { key:'ISTJ_TANK',  comment:'堅実な暗黒騎士とあなたの温かな回復は、まさに鉄壁の守護コンビ。' },
+    { key:'ESTP_TANK',  comment:'無口なガンブレイカーをそっと支える母性。相手は無言でも感謝している。' },
+    { key:'INTJ_CDPS',  comment:'論理の召喚士に感情の白魔道士。対極が補い合って初めてパーティは完成する。' },
+  ],
+  INFJ_HEALER: [
+    { key:'ESTP_MDPS',  comment:'モンクの衝動的な突撃を先読みして守れるのは、未来が見える学者だけ。' },
+    { key:'ENTP_MDPS',  comment:'リーパーの予測不能な動きをすべて察知するのが学者の使命。混沌を静かに制御する。' },
+    { key:'ENTJ_TANK',  comment:'ナイトの大局的指揮と学者の緻密な事前準備が重なると無敵のラインが生まれる。' },
+  ],
+  ISFJ_HEALER: [
+    { key:'ESTJ_TANK',  comment:'戦士の豪快な自傷回復を温かくフォローする静かな守護者。無理させないよう見守る。' },
+    { key:'ENTJ_TANK',  comment:'ナイトの使命感に賢者の奉仕の心が重なる。守護と回復の美しい連鎖。' },
+    { key:'INTP_CDPS',  comment:'黒魔道士の自由な定点詠唱を誰より上手に支えられるのは、あなたの慎重な先読みだけ。' },
+  ],
+  // MDPS
+  ESTP_MDPS: [
+    { key:'INFJ_HEALER',comment:'学者の先読みがあなたの突進を完璧にカバー。暴れるほどに守られている。' },
+    { key:'ISFJ_HEALER',comment:'賢者の静かな見守りが、あなたの全力ダッシュを安心に変えてくれる。' },
+    { key:'INTJ_CDPS',  comment:'召喚士の冷静な戦略眼があなたの爆発的DPSを最大限に活かす配置を作る。' },
+  ],
+  ISTP_MDPS: [
+    { key:'ENFJ_HEALER',comment:'占星術師のカリスマバフが、忍者の精密な立ち回りをさらに輝かせる。' },
+    { key:'ESFJ_HEALER',comment:'白魔道士の安定した回復があなたの孤高の集中を途切れさせない。' },
+    { key:'ENTP_CDPS',  comment:'ピクトマンサーの前衛芸術的な攻撃とあなたのクールな実践力が奇妙に噛み合う。' },
+  ],
+  ENTP_MDPS: [
+    { key:'INFJ_HEALER',comment:'学者の静かな読みが、リーパーの型破りな動きを陰から完璧に補佐する。' },
+    { key:'ISFJ_HEALER',comment:'賢者の忍耐と温かさが、あなたの破天荒なスタイルを支える縁の下の柱。' },
+    { key:'INTJ_CDPS',  comment:'同じ「知」の使い手として共鳴する。召喚士の戦略とリーパーの混乱が世界を揺るがす。' },
+  ],
+  ESTJ_MDPS: [
+    { key:'INFP_MDPS',  comment:'孤高の侍と夢見るヴァイパー。求道者と自由人の対比が戦場に詩を生む。' },
+    { key:'ISFP_MDPS',  comment:'同じ剣の道でも美学が違う。竜騎士の感性が侍の精神を豊かにする。' },
+    { key:'ENFJ_HEALER',comment:'占星術師のカリスマとあなたの決断力が合わさると、パーティ全体が動き出す。' },
+  ],
+  INFP_MDPS: [
+    { key:'ENTJ_TANK',  comment:'ナイトの強固な指揮がヴァイパーの自由な剣舞を最大限に活かしてくれる。' },
+    { key:'ESTJ_TANK',  comment:'戦士の揺るぎない盾があなたの夢を現実に変える土台となる。' },
+    { key:'INFP_CDPS',  comment:'同じ魂を持つ者。赤魔道士の均衡する哲学とヴァイパーの自由が詩的に共鳴する。' },
+  ],
+  ISFP_MDPS: [
+    { key:'ESTJ_TANK',  comment:'無骨な戦士があなたの繊細な美学を黙って守り続けてくれる。言葉はいらない。' },
+    { key:'ESTJ_MDPS',  comment:'侍の剛とドラグーンの美。異なる美学が高みで交わる瞬間を目指す同志。' },
+    { key:'ISFJ_HEALER',comment:'同じ内省的な魂を持つ守り手同士。賢者の静かな回復があなたの飛翔を支える。' },
+  ],
+  // RDPS
+  ESFP_RDPS: [
+    { key:'ISTJ_TANK',  comment:'暗黒騎士の影があなたの歌に深みを与える。光と闇の共演が戦場を舞台に変える。' },
+    { key:'INTJ_CDPS',  comment:'召喚士の冷静な司令があなたの表現力に意味と方向性を与えてくれる。' },
+    { key:'INFJ_HEALER',comment:'学者の先読みバリアが、吟遊詩人の自由な動き回りを完全にカバーする。' },
+  ],
+  ENFP_RDPS: [
+    { key:'ISTJ_TANK',  comment:'暗黒騎士の静かな誠実さが、踊り子の華やかさを地に足つかせてくれる。' },
+    { key:'INTJ_CDPS',  comment:'召喚士の緻密な戦略がダンサーの直感的なパートナー選びを完璧に活かす。' },
+    { key:'INFJ_HEALER',comment:'学者の深い洞察があなたの共感力と共鳴して、最高のヒール＆アシストが生まれる。' },
+  ],
+  ISTJ_RDPS: [
+    { key:'ESTJ_TANK',  comment:'戦士の安定した壁があなたのガジェット展開の自由を保障してくれる。' },
+    { key:'ENFJ_HEALER',comment:'占星術師の星のバフが機工士の精密な射撃をさらに輝かせる。' },
+    { key:'INTP_CDPS',  comment:'黒魔道士の探求心と機工士の技術愛が、無言のテクノロジー同盟を結ぶ。' },
+  ],
+  // CDPS
+  INTJ_CDPS: [
+    { key:'ESFP_RDPS',  comment:'吟遊詩人の表現力が召喚士の孤高の戦略に彩りを添える。知と感性の完璧な融合。' },
+    { key:'ENFP_RDPS',  comment:'踊り子の直感と召喚士の計算が組み合わさると、予測不能な最強パーティが生まれる。' },
+    { key:'ESTP_MDPS',  comment:'モンクの爆発力を召喚士が戦略的に配置する。知性が肉体を最大限に使う。' },
+  ],
+  INTP_CDPS: [
+    { key:'ESFJ_HEALER',comment:'白魔道士の温かみが黒魔道士の孤独な探求を静かに支えてくれる。' },
+    { key:'ISTJ_RDPS',  comment:'機工士の技術愛と黒魔道士の理論探求。無言で分かり合えるモノづくり同盟。' },
+    { key:'ENFJ_HEALER',comment:'占星術師のカリスマが黒魔道士の定点詠唱を守る最高の環境を整えてくれる。' },
+  ],
+  INFP_CDPS: [
+    { key:'ENTJ_TANK',  comment:'ナイトの強固な意志が赤魔道士の理想主義を現実に引き戻してくれる。正反対の完璧な補完。' },
+    { key:'INFP_MDPS',  comment:'同じ魂を持つヴァイパーと赤魔道士。自由と均衡、二つの詩が戦場に響く。' },
+    { key:'ISFJ_HEALER',comment:'賢者の静かな奉仕があなたの理想の世界を優しく守り続けてくれる。' },
+  ],
+  ENTP_CDPS: [
+    { key:'ISTP_MDPS',  comment:'忍者のクールな技術とピクトマンサーの奔放な発想が奇跡的なコンビネーションを生む。' },
+    { key:'INFJ_HEALER',comment:'学者の緻密な読みがあなたの予測不能な攻撃をすべてカバーしてくれる唯一の存在。' },
+    { key:'ISTJ_TANK',  comment:'暗黒騎士の責任感という土台があって初めて、ピクトマンサーは思う存分キャンバスを描ける。' },
+  ],
+};
+
+function renderCompat(jobKey) {
+  const compats = compatMap[jobKey];
+  if (!compats) return;
+  const listEl = document.getElementById('compat-list');
+  const roleColors = { タンク:'#5b8dd9', ヒーラー:'#7cba8a', '近接DPS':'#c04b1a', '遠隔DPS':'#c49a1a', キャスター:'#7a4fcf' };
+  listEl.innerHTML = compats.map((c, i) => {
+    const job = jobMap[c.key];
+    if (!job) return '';
+    const mbti = c.key.split('_')[0];
+    const roleColor = roleColors[job.role] || '#c9a84c';
+    const imgHtml = job.imgKey && JOB_IMAGES[job.imgKey]
+      ? `<img class="compat-img" src="${JOB_IMAGES[job.imgKey]}" alt="${job.nameJp}">`
+      : `<div class="compat-icon-fallback">${job.icon}</div>`;
+    const rank = ['Best Match', 'Great Match', 'Good Match'][i];
+    return `
+      <div class="compat-card">
+        <div class="compat-img-wrap">${imgHtml}</div>
+        <div class="compat-info">
+          <div class="compat-mbti">${mbti}</div>
+          <div class="compat-name">${job.name}</div>
+          <div class="compat-name-jp">${job.nameJp}</div>
+          <div class="compat-comment">${c.comment}</div>
+        </div>
+        <div class="compat-badge" style="color:${roleColor};border-color:${roleColor};opacity:0.8">${rank}</div>
+      </div>`;
+  }).join('');
+}
+
+
+function hamming(a, b) {
+  let d = 0;
+  for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) d++;
+  d += Math.abs(a.length - b.length);
+  return d;
+}
+
+const roleDist = {
+  TANK:   { TANK:0, HEALER:1, MDPS:2, RDPS:2, CDPS:3 },
+  HEALER: { TANK:1, HEALER:0, MDPS:2, RDPS:1, CDPS:2 },
+  MDPS:   { TANK:2, HEALER:2, MDPS:0, RDPS:1, CDPS:1 },
+  RDPS:   { TANK:2, HEALER:1, MDPS:1, RDPS:0, CDPS:1 },
+  CDPS:   { TANK:3, HEALER:2, MDPS:1, RDPS:1, CDPS:0 },
+};
+
+function findJob(mbti, role, axisScores) {
+  // 同MBTIで複数ロールを持つ場合、ロールスコアのsoftmaxで振り分ける
+  // (ISTP→Ninja/Gunbreaker, ENTJ→Paladin/Samurai, ENTP→Reaper/Pictomancer)
+  const mbtiRoles = Object.keys(jobMap)
+    .filter(k => k.startsWith(mbti + '_'))
+    .map(k => k.split('_')[1]);
+
+  if (mbtiRoles.length === 1) {
+    const r = mbtiRoles[0];
+    return { job: jobMap[`${mbti}_${r}`], roleUsed: r };
+  }
+
+  if (mbtiRoles.length > 1 && axisScores) {
+    const scores = determineRoleScores(axisScores);
+    // このMBTIが持つロールのスコアでsoftmax（温度0.10）
+    const temp = 0.10;
+    const vals = mbtiRoles.map(r => scores[r] ?? -999);
+    const maxV = Math.max(...vals);
+    const exps = vals.map(v => Math.exp((v - maxV) / temp));
+    const total = exps.reduce((a, b) => a + b, 0);
+
+    // 決定的PRNGでシード（同じ回答→同じ結果）
+    const seedStr = `${mbti}|${axisScores.EI.toFixed(4)}|${axisScores.SN.toFixed(4)}|${axisScores.TF.toFixed(4)}|${axisScores.JP.toFixed(4)}`;
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      h ^= seedStr.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    const rVal = ((h >>> 0) % 1000000) / 1000000.0 * total;
+    let acc = 0;
+    for (let i = 0; i < mbtiRoles.length; i++) {
+      acc += exps[i];
+      if (rVal <= acc) {
+        const r = mbtiRoles[i];
+        return { job: jobMap[`${mbti}_${r}`], roleUsed: r };
+      }
+    }
+    const r = mbtiRoles[mbtiRoles.length - 1];
+    return { job: jobMap[`${mbti}_${r}`], roleUsed: r };
+  }
+
+  // フォールバック: ロールスコア順に探索
+  const fallbackSearch = fallbackOrder[role] || Object.keys(fallbackOrder)[0];
+  for (const r of fallbackSearch) {
+    const key = `${mbti}_${r}`;
+    if (jobMap[key]) return { job: jobMap[key], roleUsed: r };
+  }
+
+  // 最終フォールバック: Hamming距離
+  const candidates = Object.keys(jobMap).map((k) => {
+    const [t, r] = k.split('_');
+    const dType = hamming(mbti, t);
+    const dRole = (roleDist[role] && roleDist[role][r] != null) ? roleDist[role][r] : 3;
+    return { key: k, r, score: dType * 10 + dRole };
+  });
+  let bestScore = Infinity;
+  for (const c of candidates) bestScore = Math.min(bestScore, c.score);
+  const best = candidates.filter(c => c.score === bestScore);
+  const chosen = best[0];
+  return { job: jobMap[chosen.key], roleUsed: chosen.r };
+}
+
+// ===== ロジック =====
+let currentQ = 0;
+let axisScores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+let selectedVal = null;
+let answerHistory = []; // 戻るボタン用：各問の回答値を記録
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz() {
+  currentQ = 0;
+  axisScores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+  selectedVal = null;
+  answerHistory = [];
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  selectedVal = null;
+
+  const total = questions.length;
+  document.getElementById('question-number').textContent = `第 ${currentQ + 1} 問`;
+  document.getElementById('progress-text').textContent = `Question ${currentQ + 1} / ${total}`;
+  document.getElementById('progress-fill').style.width = `${((currentQ + 1) / total) * 100}%`;
+
+  const card = document.getElementById('question-card');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = 'fadeIn 0.4s ease';
+
+  document.getElementById('question-text').textContent = q.text;
+
+  const area = document.getElementById('scale-area');
+  area.innerHTML = `
+    <div class="scale-wrap">
+      ${SCALE.map(s => `
+        <div class="scale-row" data-val="${s.val}" onclick="selectScale(${s.val}, this)">
+          <div class="scale-radio"></div>
+          <div class="scale-label">${s.label}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      ${currentQ > 0 ? `<button class="next-btn visible" id="back-btn" onclick="prevQuestion()" style="background:transparent;border:1px solid rgba(201,168,76,0.4);color:var(--gold);flex:0 0 auto;padding:12px 20px;">&larr; 戻る</button>` : ''}
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()" style="${currentQ > 0 ? 'flex:1;' : ''}">次へ &rarr;</button>
+    </div>
+  `;
+}
+
+function selectScale(val, el) {
+  selectedVal = val;
+  document.querySelectorAll('.scale-row').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('next-btn').classList.add('visible');
+}
+
+function nextQuestion() {
+  if (selectedVal === null) return;
+  // 回答履歴に保存
+  answerHistory.push(selectedVal);
+  // 1問1軸・逆転項目対応スコア加算
+  const q = questions[currentQ];
+  const val = q.reversed ? -selectedVal : selectedVal;
+  axisScores[q.axis] += val;
+  currentQ++;
+  if (currentQ < questions.length) {
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function prevQuestion() {
+  if (currentQ <= 0) return;
+  currentQ--;
+  // 前の回答を取り出してスコアを巻き戻す
+  const prevVal = answerHistory.pop();
+  const q = questions[currentQ];
+  const prevValAdjusted = q.reversed ? -prevVal : prevVal;
+  axisScores[q.axis] -= prevValAdjusted;
+  renderQuestion();
+  // 前回の選択を復元表示
+  setTimeout(() => {
+    const row = document.querySelector(`.scale-row[data-val="${prevVal}"]`);
+    if (row) {
+      selectedVal = prevVal;
+      row.classList.add('selected');
+      document.getElementById('next-btn').classList.add('visible');
+    }
+  }, 50);
+}
+
+function showResult() {
+  showScreen('screen-loading');
+  setTimeout(() => {
+    const mbti =
+      (axisScores.EI >= 0 ? 'E' : 'I') +
+      (axisScores.SN >= 0 ? 'S' : 'N') +
+      (axisScores.TF >= 0 ? 'T' : 'F') +
+      (axisScores.JP >= 0 ? 'J' : 'P');
+
+    const role = determineRole(axisScores);
+    const picked = findJob(mbti, role, axisScores);
+    const job = picked.job;
+    const roleUsed = picked.roleUsed;
+// ジョブアート画像
+    const imgKey = job.imgKey;
+    const iconEl = document.getElementById('result-icon');
+    if (imgKey && JOB_IMAGES[imgKey]) {
+      const imagePositions = { Reaper: 'top center' };
+      const pos = imagePositions[imgKey] || 'top center';
+      iconEl.innerHTML = `<img class="result-job-art" src="${JOB_IMAGES[imgKey]}" alt="${job.nameJp}" style="object-position:${pos}">`;
+    } else {
+      iconEl.style.fontSize = '120px';
+      iconEl.style.display = 'block';
+      iconEl.style.padding = '40px 0';
+      iconEl.textContent = job.icon;
+    }
+    document.getElementById('result-mbti').textContent = mbti;
+    document.getElementById('result-job-name').textContent = job.name;
+    document.getElementById('result-job-name-jp').textContent = job.nameJp;
+    document.getElementById('result-desc').textContent = job.desc;
+
+    // ロールバッジ表示
+    const roleColors = { タンク:'#5b8dd9', ヒーラー:'#7cba8a', '近接DPS':'#c04b1a', '遠隔DPS':'#c49a1a', キャスター:'#7a4fcf' };
+    const roleEl = document.getElementById('result-job-name-jp');
+    roleEl.innerHTML = `${job.nameJp} &nbsp;<span style="font-size:11px;padding:3px 10px;border:1px solid ${roleColors[job.role]||'#c9a84c'};color:${roleColors[job.role]||'#c9a84c'};font-family:'Cinzel',serif;letter-spacing:2px;">${job.role}</span>`;
+
+    document.getElementById('result-traits').innerHTML =
+      job.traits.map(t => `<span class="trait">${t}</span>`).join('');
+
+    // スコアバー（MBTI 4軸）
+    const barsEl = document.getElementById('score-bars');
+    const axes = [
+      { label:['外向 (E)','内向 (I)'],   axis:'EI', colorL:'#e87ca0', colorR:'#7a4fcf' },
+      { label:['感覚 (S)','直感 (N)'],   axis:'SN', colorL:'#7cba8a', colorR:'#5b8dd9' },
+      { label:['思考 (T)','感情 (F)'],   axis:'TF', colorL:'#c04b1a', colorR:'#d4af37' },
+      { label:['判断 (J)','知覚 (P)'],   axis:'JP', colorL:'#4a8fb5', colorR:'#8b4db5' },
+    ];
+    barsEl.innerHTML = axes.map(ax => {
+      // 各軸の最大到達スコアを重みから動的計算
+      const maxScore = questions.filter(q => q.axis === ax.axis).length * 3;
+      const raw = axisScores[ax.axis];
+      // 中心(0)を50%として左右に振る
+      const halfPct = maxScore > 0 ? Math.round((Math.abs(raw) / maxScore) * 50) : 0;
+      const isLeft = raw >= 0; // E/S/T/J側
+      const fillStart = isLeft ? 50 : (50 - halfPct);
+      const fillWidth = halfPct;
+      const color = isLeft ? ax.colorL : ax.colorR;
+      const pctDisplay = maxScore > 0 ? Math.round((Math.abs(raw) / maxScore) * 100) : 0;
+      return `
+        <div class="score-bar">
+          <div class="score-label"><span>${ax.label[0]}</span><span>${ax.label[1]}</span></div>
+          <div class="score-track" style="position:relative;">
+            <div class="score-fill" style="position:absolute;left:${fillStart}%;width:${fillWidth}%;background:${color};height:100%;border-radius:3px;transition:width 1s ease 0.5s;"></div>
+            <div style="position:absolute;left:50%;top:-2px;width:2px;height:10px;background:rgba(255,255,255,0.25);transform:translateX(-50%);"></div>
+          </div>
+          <div style="display:flex;justify-content:${isLeft ? 'flex-start' : 'flex-end'};font-size:11px;color:${color};margin-top:3px;padding:0 2px;opacity:0.8;">${pctDisplay}%</div>
+        </div>`;
+    }).join('') + `
+      <div class="role-chart" id="role-chart-area"></div>`;
+    // ロールレーダーチャート描画
+    drawRoleChart(roleUsed, axisScores);
+
+    // 相性ジョブ
+    const jobKey = Object.keys(jobMap).find(k => jobMap[k] === job);
+    renderCompat(jobKey);
+
+    // シェアテキスト（相性ジョブ取得後に生成）
+    const compats = compatMap[jobKey] || [];
+    const compatNames = compats
+      .map(c => jobMap[c.key]?.nameJp)
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(' / ');
+    const siteUrl = 'https://your-site.github.io'; // GitHub Pages公開後に差し替え
+    const shareText = encodeURIComponent(
+      `FF14ジョブ性格診断結果：${job.nameJp}「${job.traits.join(' / ')}」
+` +
+      `${job.nameJp}と相性のいいジョブは：${compatNames}
+` +
+      `${siteUrl}
+
+` +
+      `#FF14 #ジョブ診断 #あーとの暇つぶし制作`
+    );
+    document.getElementById('share-btn').href = `https://twitter.com/intent/tweet?text=${shareText}`;
+
+    showScreen('screen-result');
+
+    // 集計データをGoogle Sheetsに送信（失敗しても診断には影響しない）
+    sendResult({ job: job.name, jobJp: job.nameJp, mbti, role: roleUsed });
+  }, 2000);
+}
+
+function sendResult(data) {
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbwHxG-LMQr7he39jHvXUkEms9xlj1bIkLfVMtUWJXztEphDyNalmp0iOJVr5eG3l-pa2g/exec';
+  fetch(GAS_URL, {
+    method: 'POST',
+    mode: 'no-cors', // CORSエラーを回避（GASの仕様）
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(() => {}); // 失敗しても無視
+}
+
+
+function drawRoleChart(role, axisScores) {
+  const roleNames  = ['TANK','HEALER','MDPS','RDPS','CDPS'];
+  const roleJp     = { TANK:'タンク', HEALER:'ヒーラー', MDPS:'近接DPS', RDPS:'遠隔DPS', CDPS:'キャスター' };
+  const roleColors = { TANK:'#5b8dd9', HEALER:'#7cba8a', MDPS:'#c04b1a', RDPS:'#c49a1a', CDPS:'#7a4fcf' };
+
+  // determineRoleと同じ重み付きスコアをチャートにも使用
+  const ei = axisScores.EI, tf = axisScores.TF, sn = axisScores.SN, jp = axisScores.JP;
+  const raw = {
+    TANK:   ei * 0.6 + tf * 0.5 + jp * 0.4,
+    HEALER: ei * 0.4 - tf * 0.6 + jp * 0.3,
+    MDPS:   tf * 0.4 + sn * 0.5 - jp * 0.2,
+    RDPS:  -ei * 0.3 - tf * 0.3 + sn * 0.3 - jp * 0.2,
+    CDPS:  -ei * 0.5 - sn * 0.6 - jp * 0.2,
+  };
+
+  // 全ロールを0以上にシフトして正規化
+  const minVal = Math.min(...Object.values(raw));
+  const shifted = {};
+  roleNames.forEach(rn => { shifted[rn] = raw[rn] - minVal + 0.1; });
+  const maxVal = Math.max(...Object.values(shifted));
+  const normalized = {};
+  roleNames.forEach(rn => { normalized[rn] = shifted[rn] / maxVal; });
+  normalized[role] = Math.max(normalized[role], 0.75);
+
+  // SVG五角形レーダーチャート
+  const cx = 130, cy = 135, r = 85;
+  const angles = [-90, -90+72, -90+144, -90+216, -90+288].map(d => d * Math.PI / 180);
+
+  function pt(i, radius) {
+    return [cx + radius * Math.cos(angles[i]), cy + radius * Math.sin(angles[i])];
+  }
+
+  // グリッド
+  let gridLines = '';
+  [0.25, 0.5, 0.75, 1.0].forEach(scale => {
+    const pts = roleNames.map((_, i) => pt(i, r * scale).join(',')).join(' ');
+    gridLines += `<polygon points="${pts}" fill="none" stroke="rgba(201,168,76,0.12)" stroke-width="1"/>`;
+  });
+
+  // 軸線
+  const axisLines = roleNames.map((_, i) => {
+    const [x, y] = pt(i, r);
+    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>`;
+  }).join('');
+
+  // データポリゴン
+  const dataPoints = roleNames.map((rn, i) => pt(i, r * normalized[rn]).join(','));
+  const dataPoly = `<polygon points="${dataPoints.join(' ')}" fill="rgba(201,168,76,0.18)" stroke="#c9a84c" stroke-width="2"/>`;
+
+  // ドット
+  const dots = roleNames.map((rn, i) => {
+    const [x, y] = pt(i, r * normalized[rn]);
+    const isActive = rn === role;
+    return `<circle cx="${x}" cy="${y}" r="${isActive ? 7 : 4}"
+      fill="${isActive ? roleColors[rn] : '#c9a84c'}"
+      opacity="${isActive ? 1 : 0.7}"
+      ${isActive ? 'filter="url(#glow)"' : ''}/>`;
+  }).join('');
+
+  // ラベル
+  const labels = roleNames.map((rn, i) => {
+    const [x, y] = pt(i, r + 24);
+    const isActive = rn === role;
+    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle"
+      font-family="Noto Serif JP, serif"
+      font-size="${isActive ? 13 : 11}"
+      fill="${isActive ? roleColors[rn] : 'rgba(232,223,200,0.45)'}"
+      font-weight="${isActive ? 'bold' : 'normal'}">${roleJp[rn]}</text>`;
+  }).join('');
+
+  const svg = `
+    <svg class="role-pentagon" width="270" height="280" viewBox="0 0 270 280">
+      <defs>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      ${gridLines}${axisLines}${dataPoly}${dots}${labels}
+    </svg>`;
+
+  const el = document.getElementById('role-chart-area');
+  if (el) {
+    el.innerHTML = `<div class="role-chart-title">Role Tendency</div>${svg}`;
+  }
+}
+
+function restartQuiz() {
+  startQuiz();
+}
+
+// Stars
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.cssText = `
+      left: ${Math.random() * 100}%;
+      top: ${Math.random() * 100}%;
+      --dur: ${2 + Math.random() * 4}s;
+      --op: ${0.2 + Math.random() * 0.6};
+      animation-delay: ${Math.random() * 4}s;
+    `;
+    container.appendChild(star);
+  }
+}
+
+createStars();
+</script>
+
+<script>
+/* ===== Debug harness (dev only) ===== */
+(function(){
+  'use strict';
+  function getParams(){
+    // Robust for file:// URLs on Chrome/Windows
+    return new URLSearchParams(window.location.search || '');
+  }
+  function isDebug(){
+    const p=getParams();
+    return p.get('debug')==='1' || p.get('debug')==='true';
+  }
+  function isAutorun(){
+    const p=getParams();
+    return p.get('autorun')==='1' || p.get('autorun')==='true';
+  }
+
+  function randChoice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+  // Detect the scale values from the UI definition (fallback to [-2,-1,0,1,2])
+  function getScaleValues(){
+    // If the page defines SCALE_CHOICES or similar, try to use it.
+    if (window.SCALE_CHOICES && Array.isArray(window.SCALE_CHOICES)) {
+      const vals = window.SCALE_CHOICES.map(x=>x.value).filter(v=>typeof v==='number');
+      if (vals.length) return vals;
+    }
+    return [-2,-1,0,1,2];
+  }
+
+  function computeMBTIFromScores(scores){
+    return (scores.EI >= 0 ? 'E':'I') +
+           (scores.SN >= 0 ? 'S':'N') +
+           (scores.TF >= 0 ? 'T':'F') +
+           (scores.JP >= 0 ? 'J':'P');
+  }
+
+  function simulateOnce(scaleValues){
+    // relies on globals defined in the main script: questions, determineRole, findJob
+    const scores = { EI:0, SN:0, TF:0, JP:0 };
+    for (let i=0;i<window.questions.length;i++){
+      const q = window.questions[i];
+      const v = randChoice(scaleValues);
+      scores[q.axis] += v;
+    }
+    const mbti = computeMBTIFromScores(scores);
+    const role = window.determineRole(scores);
+    const picked = window.findJob(mbti, role, axisScores);
+    const job = picked.job;
+    const roleUsed = picked.roleUsed;
+    // Use a stable key for counting: the jobMap key if possible
+    const key = `${mbti}_${roleUsed}`;
+    return { key, mbti, roleRequested: role, roleUsed, jobName: job.name, jobNameJp: job.nameJp };
+  }
+
+  function toCsv(rows){
+    const header = ['rank','count','pct','jobName','jobNameJp','exampleKey','roleUsed','mbtiHint'];
+    const lines = [header.join(',')];
+    rows.forEach((r, idx)=>{
+      const line = [
+        idx+1,
+        r.count,
+        (r.pct).toFixed(2),
+        `"${String(r.jobName).replaceAll('"','""')}"`,
+        `"${String(r.jobNameJp).replaceAll('"','""')}"`,
+        `"${String(r.exampleKey).replaceAll('"','""')}"`,
+        r.roleUsed,
+        r.mbtiHint
+      ].join(',');
+      lines.push(line);
+    });
+    return lines.join('\n');
+  }
+
+  function download(filename, text){
+    const blob = new Blob([text], {type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  function renderDebugPanel(summary, n, meta){
+    // create panel under intro card
+    const introCard = document.querySelector('#screen-intro .intro-card');
+    if (!introCard) return;
+
+    let panel = document.getElementById('debug-panel');
+    if (!panel){
+      panel = document.createElement('div');
+      panel.id = 'debug-panel';
+      panel.style.marginTop = '18px';
+      panel.style.textAlign = 'left';
+      panel.style.padding = '16px';
+      panel.style.border = '1px solid rgba(201,168,76,0.25)';
+      panel.style.background = 'rgba(201,168,76,0.04)';
+      panel.style.fontSize = '12px';
+      panel.style.lineHeight = '1.7';
+      introCard.appendChild(panel);
+    }
+
+    const top = summary.slice(0, 21);
+    const missing = meta.expectedKeys.filter(k=>!meta.seenKeys.has(k));
+
+    const rowsHtml = top.map((r, idx)=>`
+      <tr>
+        <td style="padding:6px 8px;opacity:.75">${idx+1}</td>
+        <td style="padding:6px 8px">${r.jobNameJp} <span style="opacity:.6">(${r.jobName})</span></td>
+        <td style="padding:6px 8px">${r.roleUsed}</td>
+        <td style="padding:6px 8px;text-align:right">${r.count}</td>
+        <td style="padding:6px 8px;text-align:right">${r.pct.toFixed(2)}%</td>
+        <td style="padding:6px 8px;opacity:.7">${r.exampleKey}</td>
+      </tr>
+    `).join('');
+
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="font-family:'Cinzel',serif;letter-spacing:2px;color:var(--gold)">DEBUG RESULTS</div>
+        <div style="opacity:.75">N=${n.toLocaleString()}</div>
+        <button id="debug-download" style="margin-left:auto;padding:6px 10px;border:1px solid rgba(201,168,76,0.35);background:transparent;color:var(--gold);cursor:pointer;font-family:'Cinzel',serif;letter-spacing:2px;font-size:10px">
+          CSVダウンロード
+        </button>
+      </div>
+
+      <div style="opacity:.85;margin-bottom:10px">
+        期待キー数: ${meta.expectedKeys.length} / 観測キー数: ${meta.seenKeys.size}
+        ${missing.length ? `<br><span style="color:rgba(255,200,200,.9)">未出現キー: ${missing.join(', ')}</span>` : `<br><span style="color:rgba(180,255,200,.9)">未出現キーなし（到達性OK）</span>`}
+      </div>
+
+      <div style="overflow:auto;border:1px solid rgba(255,255,255,0.08);border-radius:3px">
+        <table style="width:100%;border-collapse:collapse;min-width:640px">
+          <thead>
+            <tr style="background:rgba(0,0,0,0.25)">
+              <th style="padding:8px 8px;text-align:left">#</th>
+              <th style="padding:8px 8px;text-align:left">Job</th>
+              <th style="padding:8px 8px;text-align:left">RoleUsed</th>
+              <th style="padding:8px 8px;text-align:right">Count</th>
+              <th style="padding:8px 8px;text-align:right">%</th>
+              <th style="padding:8px 8px;text-align:left">Example Key</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;opacity:.7">
+        ※ このシミュレーションは「各設問で -2,-1,0,1,2 を等確率で選ぶ」乱択です（ユーザー分布は未反映）。
+      </div>
+    `;
+
+    const btn = document.getElementById('debug-download');
+    if (btn){
+      btn.onclick = () => download('ff14-job-quiz_debug_counts.csv', toCsv(summary));
+    }
+  }
+
+  // public
+  window.runDebugSimulation = async function runDebugSimulation(){
+    const n = 10000;
+    const scaleValues = getScaleValues();
+
+    const btn = document.getElementById('debug-btn');
+    const status = document.getElementById('debug-status');
+
+    if (btn){ btn.disabled = true; btn.style.opacity = '0.7'; btn.textContent = '実行中...'; }
+    if (status){ status.style.display='block'; status.textContent = 'debug=ON  search=' + window.location.search + ' / running... 0%'; }
+
+    // Let the browser paint the "running" state before heavy work
+    await new Promise(r => setTimeout(r, 0));
+
+    const counts = new Map(); // jobName -> {count, jobNameJp, roleUsed, exampleKey, mbtiHint}
+    const seenKeys = new Set();
+
+    // expected keys = jobMap keys (these are the "21通り" etc.)
+    const expectedKeys = Object.keys(window.jobMap || {});
+
+    const chunk = 250; // yield every N iterations so UI stays responsive
+    for (let i=0;i<n;i++){
+      const r = simulateOnce(scaleValues);
+      seenKeys.add(r.key);
+
+      const k = r.jobName; // count by final job (what user sees)
+      const prev = counts.get(k);
+      if (prev){
+        prev.count += 1;
+      } else {
+        counts.set(k, { count: 1, jobName: r.jobName, jobNameJp: r.jobNameJp, roleUsed: r.roleUsed, exampleKey: r.key, mbtiHint: r.mbti });
+      }
+
+      if ((i+1) % chunk === 0){
+        if (status){
+          const pct = Math.floor(((i+1)/n) * 100);
+          status.textContent = 'debug=ON  search=' + window.location.search + ' / running... ' + pct + '%';
+        }
+        // yield to UI thread
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+
+    const summary = Array.from(counts.values())
+      .map(x => ({...x, pct: (x.count / n) * 100}))
+      .sort((a,b)=>b.count-a.count);
+
+    renderDebugPanel(summary, n, { expectedKeys, seenKeys });
+
+    if (status){
+      status.textContent = 'debug=ON  search=' + window.location.search + ' / done ✅';
+    }
+    if (btn){
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.textContent = 'デバッグ：ランダム10,000回';
+    }
+  };
+
+  // Activate debug UI if requested
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!isDebug()) return;
+    const btn = document.getElementById('debug-btn');
+    if (btn) btn.style.display = 'inline-block';
+    const dbg=document.getElementById('debug-status');
+    if(dbg){ dbg.style.display='block'; dbg.textContent = 'debug=ON  search=' + window.location.search; }
+
+    if (isAutorun()){
+      // small delay so layout is ready
+      setTimeout(()=>window.runDebugSimulation(), 50);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
